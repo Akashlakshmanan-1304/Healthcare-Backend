@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,10 +33,19 @@ public class DoctorService {
 
     @Autowired
     private UserRepository userRepository;
-    public List<AppointmentResponseDTO> getDoctorAppointments( Long doctorId) {
+    public List<AppointmentResponseDTO> getDoctorAppointments(Long doctorId) {
+        List<Appointment> appointments = appointmentRepo.findByDoctor_UserId(doctorId);
         LocalDate today = LocalDate.now();
-        List<Appointment> appointments= appointmentRepo.findByDoctor_UserIdAndDate(doctorId, today);
-        return appointments.stream().map(a->new AppointmentResponseDTO(a.getAppointmentId(),a.getDoctor().getName(),a.getPatient().getName(),a.getDate(),a.getTimeSlot(),a.getStatus().name())).toList();
+        LocalTime now = LocalTime.now();
+        for (Appointment a : appointments) {
+            if (a.getStatus() == com.cognizant.healthCareAppointment.entity.AppointmentStatus.BOOKED) {
+                if (a.getDate().isBefore(today) ||( (a.getDate().isEqual(today) && a.getTimeSlot().isBefore(now)))) {
+                    a.setStatus(com.cognizant.healthCareAppointment.entity.AppointmentStatus.CANCELLED);
+                    appointmentRepo.save(a);
+                }
+            }
+        }
+        return appointments.stream().map(a -> new AppointmentResponseDTO(a.getAppointmentId(), a.getDoctor().getName(), a.getPatient().getName(), a.getDate(), a.getTimeSlot(), a.getStatus().name())).toList();
     }
 
     public ResponseEntity<String> addConsultation( ConsultationRequest request) {

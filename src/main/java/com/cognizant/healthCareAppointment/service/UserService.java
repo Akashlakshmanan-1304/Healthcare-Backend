@@ -2,6 +2,7 @@ package com.cognizant.healthCareAppointment.service;
 
 import com.cognizant.healthCareAppointment.dto.AppointmentResponseDTO;
 import com.cognizant.healthCareAppointment.dto.ConsultationResponseDTO;
+import com.cognizant.healthCareAppointment.dto.UserEditRequest;
 import com.cognizant.healthCareAppointment.dto.UserInfoResponse;
 import com.cognizant.healthCareAppointment.entity.Appointment;
 import com.cognizant.healthCareAppointment.entity.Consultation;
@@ -11,6 +12,8 @@ import com.cognizant.healthCareAppointment.repository.ConsultationRepository;
 import com.cognizant.healthCareAppointment.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -28,6 +31,8 @@ public class UserService {
     private ConsultationRepository consultationRepo;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
 
     public List<ConsultationResponseDTO> getPatientConsultations( Long patientId) {
@@ -48,7 +53,7 @@ public class UserService {
         LocalTime now = LocalTime.now();
         for (Appointment a : appointments) {
             if (a.getStatus() == com.cognizant.healthCareAppointment.entity.AppointmentStatus.BOOKED) {
-                if (a.getDate().isBefore(today) || (a.getDate().isEqual(today) && a.getTimeSlot().isBefore(now))) {
+                if (a.getDate().isBefore(today) ||( (a.getDate().isEqual(today) && a.getTimeSlot().isBefore(now)))) {
                     a.setStatus(com.cognizant.healthCareAppointment.entity.AppointmentStatus.CANCELLED);
                     appointmentRepo.save(a);
                 }
@@ -71,4 +76,23 @@ public class UserService {
             return null;
         }
     }
+public ResponseEntity<String> userEditDetails(Long userId, UserEditRequest userEditRequest) {
+    Optional<User> userOpt = userRepository.findById(userId);
+    if (userOpt.isPresent()) {
+        User user = userOpt.get();
+        // Assuming passwords are stored as plain text (not recommended for production)
+        if (!passwordEncoder.matches(userEditRequest.getPassword(),user.getPassword())) {
+            System.out.println(user.getPassword()+"  "+passwordEncoder.encode(userEditRequest.getPassword())+" "+userEditRequest.getPassword());
+            return ResponseEntity.status(401).body("Invalid password.");
+        }
+        user.setName(userEditRequest.getName());
+        user.setPhone(userEditRequest.getPhone());
+        userRepository.save(user);
+        return ResponseEntity.ok("User profile updated successfully.");
+    } else {
+        return ResponseEntity.status(404).body("User not found.");
+    }
+    }
+        
+
 }

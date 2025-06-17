@@ -2,6 +2,7 @@ package com.cognizant.healthCareAppointment.controller;
 
 import com.cognizant.healthCareAppointment.dto.AppointmentResponseDTO;
 import com.cognizant.healthCareAppointment.dto.ConsultationResponseDTO;
+import com.cognizant.healthCareAppointment.dto.UserEditRequest;
 import com.cognizant.healthCareAppointment.dto.UserInfoResponse;
 import com.cognizant.healthCareAppointment.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,5 +31,10 @@ public class UserController {
     @GetMapping("/{userId}/details")
     public UserInfoResponse getUserInfo(@PathVariable Long userId){
         return userService.userDetails(userId);
+    }
+
+    @PutMapping("/{userId}/edit")
+    public ResponseEntity<String> editUserDetails(@PathVariable Long userId, @RequestBody UserEditRequest userEditRequest) {
+        return userService.userEditDetails(userId, userEditRequest);
     }
 }
