@@ -1,9 +1,6 @@
 package com.cognizant.healthCareAppointment.service;
 
-import com.cognizant.healthCareAppointment.dto.AppointmentResponseDTO;
-import com.cognizant.healthCareAppointment.dto.ConsultationRequest;
-import com.cognizant.healthCareAppointment.dto.ConsultationResponseDTO;
-import com.cognizant.healthCareAppointment.dto.DoctorInfoResponse;
+import com.cognizant.healthCareAppointment.dto.*;
 import com.cognizant.healthCareAppointment.entity.Appointment;
 import com.cognizant.healthCareAppointment.entity.AppointmentStatus;
 import com.cognizant.healthCareAppointment.entity.Consultation;
@@ -34,12 +31,13 @@ public class DoctorService {
     @Autowired
     private UserRepository userRepository;
     public List<AppointmentResponseDTO> getDoctorAppointments(Long doctorId) {
-        List<Appointment> appointments = appointmentRepo.findByDoctor_UserId(doctorId);
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
+        List<Appointment> appointments = appointmentRepo.findByDoctor_UserIdAndDate(doctorId,today);
+
         for (Appointment a : appointments) {
             if (a.getStatus() == com.cognizant.healthCareAppointment.entity.AppointmentStatus.BOOKED) {
-                if (a.getDate().isBefore(today) ||( (a.getDate().isEqual(today) && a.getTimeSlot().isBefore(now)))) {
+                if ( a.getTimeSlot().isBefore(now)) {
                     a.setStatus(com.cognizant.healthCareAppointment.entity.AppointmentStatus.CANCELLED);
                     appointmentRepo.save(a);
                 }
@@ -94,6 +92,18 @@ public class DoctorService {
         }
         else{
             return null;
+        }
+    }
+    public ResponseEntity<String> updateConsultation(Long id, ConsultationUpdateRequest request) {
+        Optional<Consultation> consultationOpt = consultationRepo.findById(id);
+        if (consultationOpt.isPresent()) {
+            Consultation consultation = consultationOpt.get();
+            consultation.setNotes(request.getNotes());
+            consultation.setPrescription(request.getPrescriptions());
+            consultationRepo.save(consultation);
+            return ResponseEntity.ok("Consultation updated successfully.");
+        } else {
+            return ResponseEntity.status(404).body("Consultation not found.");
         }
     }
 }

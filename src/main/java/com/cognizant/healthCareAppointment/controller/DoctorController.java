@@ -1,9 +1,6 @@
 package com.cognizant.healthCareAppointment.controller;
 
-import com.cognizant.healthCareAppointment.dto.AppointmentResponseDTO;
-import com.cognizant.healthCareAppointment.dto.ConsultationRequest;
-import com.cognizant.healthCareAppointment.dto.ConsultationResponseDTO;
-import com.cognizant.healthCareAppointment.dto.DoctorInfoResponse;
+import com.cognizant.healthCareAppointment.dto.*;
 import com.cognizant.healthCareAppointment.service.DoctorService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,5 +38,15 @@ public class DoctorController {
     @GetMapping("/{doctorId}/details")
     public  DoctorInfoResponse getDoctorInfo(@PathVariable Long doctorId){
         return doctorService.getDoctorInfo(doctorId);
+    }
+    @PutMapping("/consultation/update/{id}")
+    public ResponseEntity<String> updateConsultation(
+            @PathVariable Long id,
+            @Valid @RequestBody ConsultationUpdateRequest request,
+            BindingResult result) {
+        if (result.hasErrors()) {
+            return ResponseEntity.badRequest().body(result.getFieldError().getDefaultMessage());
+        }
+        return doctorService.updateConsultation(id, request);
     }
 }

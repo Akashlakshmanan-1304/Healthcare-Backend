@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LoginResponse {
-    @NotBlank(message = "Message is required")
-    private String message;
-    private  String token;
-
+public class ConsultationUpdateRequest {
+    @NotBlank(message = "Consultation ID is required")
+    private String prescriptions;
+    @NotBlank(message = "Appointment ID is required")
+    private String notes;
 }
