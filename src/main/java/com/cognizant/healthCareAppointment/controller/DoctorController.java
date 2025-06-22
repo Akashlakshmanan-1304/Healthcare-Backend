@@ -49,4 +49,8 @@ public class DoctorController {
         }
         return doctorService.updateConsultation(id, request);
     }
+    @PutMapping("/{userId}/edit")
+    public ResponseEntity<String> editUserDetails(@PathVariable Long userId, @RequestBody UserEditRequest userEditRequest) {
+        return doctorService.userEditDetails(userId, userEditRequest);
+    }
 }

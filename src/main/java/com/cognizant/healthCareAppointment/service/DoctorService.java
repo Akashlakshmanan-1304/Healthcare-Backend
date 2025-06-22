@@ -12,6 +12,7 @@ import com.cognizant.healthCareAppointment.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -30,6 +31,8 @@ public class DoctorService {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    PasswordEncoder passwordEncoder;
     public List<AppointmentResponseDTO> getDoctorAppointments(Long doctorId) {
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
@@ -104,6 +107,22 @@ public class DoctorService {
             return ResponseEntity.ok("Consultation updated successfully.");
         } else {
             return ResponseEntity.status(404).body("Consultation not found.");
+        }
+    }
+    public ResponseEntity<String> userEditDetails(Long userId, UserEditRequest userEditRequest) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (!passwordEncoder.matches(userEditRequest.getPassword(),user.getPassword())) {
+                System.out.println(user.getPassword()+"  "+passwordEncoder.encode(userEditRequest.getPassword())+" "+userEditRequest.getPassword());
+                return ResponseEntity.status(401).body("Invalid password.");
+            }
+            user.setName(userEditRequest.getName());
+            user.setPhone(userEditRequest.getPhone());
+            userRepository.save(user);
+            return ResponseEntity.ok("User profile updated successfully.");
+        } else {
+            return ResponseEntity.status(404).body("User not found.");
         }
     }
 }

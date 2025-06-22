@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -32,7 +33,7 @@ public class AvailabilityService {
                     .anyMatch(a -> a.getTimeSlot().isAfter(newEndTime));
 
             if (hasLateAppointment) {
-                return ResponseEntity.unprocessableEntity().body("Cannot update availability. One or more appointments are booked beyond the new end time.");
+                return ResponseEntity.badRequest().body("Cannot update availability. One or more appointments are booked beyond the new end time.");
             }
         }
 
@@ -43,7 +44,10 @@ public class AvailabilityService {
         availability.setDoctorId(request.getDoctorId());
         availability.setDate(localDate);
         availability.setIsAvailable(request.getIsAvailable());
-
+        double diff = Duration.between(request.getStartTime(), request.getEndTime()).toMinutes() / 60.0;
+    if(diff<5){
+    return ResponseEntity.badRequest().body("Cannot update availability. Minimum work hours is 5HRS.");
+    }
         if (request.getIsAvailable()) {
             availability.setStartTime(request.getStartTime());
             availability.setEndTime(request.getEndTime());

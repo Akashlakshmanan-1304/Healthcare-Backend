@@ -72,6 +72,7 @@ public class AppointmentService {
         if(availability==null){
            throw new AvailabilityNotFoundException("No Availability found, add Availability");
         }
+
         List<String> slots = new ArrayList<>();
 
             if (availability.getIsAvailable()) {
