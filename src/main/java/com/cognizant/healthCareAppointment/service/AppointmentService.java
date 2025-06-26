@@ -39,7 +39,6 @@ public class AppointmentService {
     public List<DoctorInfoDTO> getAvailableDoctorsForTomorrow() {
         LocalDate tomorrow = LocalDate.now().plusDays(1);
         List<Availability> available = availabilityRepo.findByDate(tomorrow);
-
         List<Long> doctorIds = new ArrayList<>();
         for (Availability a : available) {
             if (a.getIsAvailable() != null && a.getIsAvailable()) {

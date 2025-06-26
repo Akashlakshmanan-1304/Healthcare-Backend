@@ -33,6 +33,40 @@ public class DoctorService {
     private UserRepository userRepository;
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    public DoctorInfoResponse getDoctorInfo(Long doctorId) {
+        Optional<User> userOpt=userRepository.findById(doctorId);
+        if(userOpt.isPresent()){
+            User user= userOpt.get();
+            DoctorInfoResponse doctorInfoResponse=DoctorInfoResponse.builder()
+                    .email(user.getEmail())
+                    .phone(user.getPhone())
+                    .name(user.getName())
+                    .build();
+            return doctorInfoResponse;
+        }
+        else{
+            return null;
+        }
+    }
+
+    public ResponseEntity<String> userEditDetails(Long userId, UserEditRequest userEditRequest) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (!passwordEncoder.matches(userEditRequest.getPassword(),user.getPassword())) {
+                System.out.println(user.getPassword()+"  "+passwordEncoder.encode(userEditRequest.getPassword())+" "+userEditRequest.getPassword());
+                return ResponseEntity.status(401).body("Invalid password.");
+            }
+            user.setName(userEditRequest.getName());
+            user.setPhone(userEditRequest.getPhone());
+            userRepository.save(user);
+            return ResponseEntity.ok("User profile updated successfully.");
+        } else {
+            return ResponseEntity.status(404).body("User not found.");
+        }
+    }
+
     public List<AppointmentResponseDTO> getDoctorAppointments(Long doctorId) {
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
@@ -82,21 +116,7 @@ public class DoctorService {
         return consultations.stream().map(con -> new ConsultationResponseDTO(con.getConsultationId(), con.getAppointment().getAppointmentId(),con.getAppointment().getPatient().getName(),con.getAppointment().getDoctor().getName(),con.getNotes(),con.getPrescription(),con.getAppointment().getDate() )).toList();
     }
 
-    public DoctorInfoResponse getDoctorInfo(Long doctorId) {
-        Optional<User> userOpt=userRepository.findById(doctorId);
-        if(userOpt.isPresent()){
-            User user= userOpt.get();
-            DoctorInfoResponse doctorInfoResponse=DoctorInfoResponse.builder()
-                    .email(user.getEmail())
-                    .phone(user.getPhone())
-                    .name(user.getName())
-                    .build();
-            return doctorInfoResponse;
-        }
-        else{
-            return null;
-        }
-    }
+
     public ResponseEntity<String> updateConsultation(Long id, ConsultationUpdateRequest request) {
         Optional<Consultation> consultationOpt = consultationRepo.findById(id);
         if (consultationOpt.isPresent()) {
@@ -109,20 +129,5 @@ public class DoctorService {
             return ResponseEntity.status(404).body("Consultation not found.");
         }
     }
-    public ResponseEntity<String> userEditDetails(Long userId, UserEditRequest userEditRequest) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            if (!passwordEncoder.matches(userEditRequest.getPassword(),user.getPassword())) {
-                System.out.println(user.getPassword()+"  "+passwordEncoder.encode(userEditRequest.getPassword())+" "+userEditRequest.getPassword());
-                return ResponseEntity.status(401).body("Invalid password.");
-            }
-            user.setName(userEditRequest.getName());
-            user.setPhone(userEditRequest.getPhone());
-            userRepository.save(user);
-            return ResponseEntity.ok("User profile updated successfully.");
-        } else {
-            return ResponseEntity.status(404).body("User not found.");
-        }
-    }
+
 }

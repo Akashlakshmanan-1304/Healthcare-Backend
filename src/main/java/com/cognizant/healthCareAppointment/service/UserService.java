@@ -34,17 +34,37 @@ public class UserService {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    public UserInfoResponse userDetails(Long userId) {
+        Optional<User> userOpt=userRepository.findById(userId);
+        if(userOpt.isPresent()){
+            User user= userOpt.get();
+            UserInfoResponse userInfoResponse=UserInfoResponse.builder()
+                    .email(user.getEmail())
+                    .phone(user.getPhone())
+                    .name(user.getName())
+                    .build();
+            return userInfoResponse;
+        }
+        else{
+            return null;
+        }
+    }
 
-    public List<ConsultationResponseDTO> getPatientConsultations( Long patientId) {
-        List<Appointment> patientAppointments = appointmentRepo.findByPatient_UserId(patientId);
-
-        List<Long> appointmentIds = patientAppointments.stream()
-                .map(Appointment::getAppointmentId)
-                .toList();
-
-        List<Consultation>consultations= consultationRepo.findByAppointment_AppointmentIdIn(appointmentIds);
-        return consultations.stream().map(con -> new ConsultationResponseDTO(con.getConsultationId(), con.getAppointment().getAppointmentId(),con.getAppointment().getPatient().getName(),con.getAppointment().getDoctor().getName(),con.getNotes(),con.getPrescription(),con.getAppointment().getDate() )).toList();
-
+    public ResponseEntity<String> userEditDetails(Long userId, UserEditRequest userEditRequest) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (!passwordEncoder.matches(userEditRequest.getPassword(),user.getPassword())) {
+                System.out.println(user.getPassword()+"  "+passwordEncoder.encode(userEditRequest.getPassword())+" "+userEditRequest.getPassword());
+                return ResponseEntity.status(401).body("Invalid password.");
+            }
+            user.setName(userEditRequest.getName());
+            user.setPhone(userEditRequest.getPhone());
+            userRepository.save(user);
+            return ResponseEntity.ok("User profile updated successfully.");
+        } else {
+            return ResponseEntity.status(404).body("User not found.");
+        }
     }
 
     public List<AppointmentResponseDTO> getDoctorAppointments(Long patientId) {
@@ -61,38 +81,17 @@ public class UserService {
         }
         return appointments.stream().map(a -> new AppointmentResponseDTO(a.getAppointmentId(), a.getDoctor().getName(), a.getPatient().getName(), a.getDate(), a.getTimeSlot(), a.getStatus().name())).toList();
     }
-    public UserInfoResponse userDetails(Long userId) {
-        Optional<User> userOpt=userRepository.findById(userId);
-        if(userOpt.isPresent()){
-            User user= userOpt.get();
-            UserInfoResponse userInfoResponse=UserInfoResponse.builder()
-                    .email(user.getEmail())
-                    .phone(user.getPhone())
-                    .name(user.getName())
-                    .build();
-            return userInfoResponse;
-        }
-        else{
-            return null;
-        }
-    }
-public ResponseEntity<String> userEditDetails(Long userId, UserEditRequest userEditRequest) {
-    Optional<User> userOpt = userRepository.findById(userId);
-    if (userOpt.isPresent()) {
-        User user = userOpt.get();
-        // Assuming passwords are stored as plain text (not recommended for production)
-        if (!passwordEncoder.matches(userEditRequest.getPassword(),user.getPassword())) {
-            System.out.println(user.getPassword()+"  "+passwordEncoder.encode(userEditRequest.getPassword())+" "+userEditRequest.getPassword());
-            return ResponseEntity.status(401).body("Invalid password.");
-        }
-        user.setName(userEditRequest.getName());
-        user.setPhone(userEditRequest.getPhone());
-        userRepository.save(user);
-        return ResponseEntity.ok("User profile updated successfully.");
-    } else {
-        return ResponseEntity.status(404).body("User not found.");
-    }
-    }
-        
 
+    public List<ConsultationResponseDTO> getPatientConsultations( Long patientId) {
+        List<Appointment> patientAppointments = appointmentRepo.findByPatient_UserId(patientId);
+
+        List<Long> appointmentIds = patientAppointments.stream()
+                .map(Appointment::getAppointmentId)
+                .toList();
+
+        List<Consultation>consultations= consultationRepo.findByAppointment_AppointmentIdIn(appointmentIds);
+        return consultations.stream().map(con -> new ConsultationResponseDTO(con.getConsultationId(), con.getAppointment().getAppointmentId(),con.getAppointment().getPatient().getName(),con.getAppointment().getDoctor().getName(),con.getNotes(),con.getPrescription(),con.getAppointment().getDate() )).toList();
+
+    }
 }
+//Jmeter , SonarCube ,  
